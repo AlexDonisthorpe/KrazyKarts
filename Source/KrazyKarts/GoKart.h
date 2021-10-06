@@ -27,7 +27,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 private:
-	void MoveForward(float val);
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+	void ApplyRotation(float DeltaTime);
 	void UpdateLocationFromVelocity(float DeltaTime);
 
 	FVector Velocity;
@@ -39,6 +41,11 @@ private:
 	// Force applied to the car when the throttle is fully down (N)
 	UPROPERTY(EditAnywhere)
 	float MaxDrivingForce = 10000;
+
+	// The number of degrees rotated per second at full control throw (degrees/s)
+	UPROPERTY(EditAnywhere)
+	float MaxDegreesPerSecond = 90;
 	
 	float Throttle;
+	float SteeringThrow;
 };
