@@ -34,9 +34,13 @@ void AGoKart::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	FVector Force = MaxDrivingForce * Throttle * GetActorForwardVector();
+	Force += GetResistance();
+	
 	FVector Acceleration = Force / Mass;
 
 	Velocity = Velocity + Acceleration * DeltaTime;
+
+	// Length of the vector, which indicates the speed;
 
 	ApplyRotation(DeltaTime);
 	UpdateLocationFromVelocity(DeltaTime);
@@ -50,6 +54,11 @@ void AGoKart::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AGoKart::MoveForward);
 	PlayerInputComponent->BindAxis("MoveRight", this, &AGoKart::MoveRight);
+}
+
+FVector AGoKart::GetResistance()
+{
+	return - Velocity.GetSafeNormal() * Velocity.SizeSquared() * DragCoefficient; 
 }
 
 void AGoKart::MoveForward(float Value)
