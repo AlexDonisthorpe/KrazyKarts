@@ -94,3 +94,4 @@ Build/Android/res/*/*
 # End of https://www.toptal.com/developers/gitignore/api/unrealengine
 .idea/
 Content/Assets/
+Plugins/
