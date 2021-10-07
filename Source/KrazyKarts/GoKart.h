@@ -19,7 +19,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
@@ -28,7 +28,9 @@ public:
 
 private:
 
-	FVector GetResistance();
+	FVector GetAirResistance();
+	FVector GetRollingResistance();
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void ApplyRotation(float DeltaTime);
@@ -51,6 +53,10 @@ private:
 	// Higher means more Drag (kg/per meter)
 	UPROPERTY(EditAnywhere)
 	float DragCoefficient = 16;
+
+	// Higher means more rolling resistance
+	UPROPERTY(EditAnywhere)
+	float RollingResistanceCoefficient = 0.015f;
 	
 	float Throttle;
 	float SteeringThrow;
