@@ -6,6 +6,37 @@
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
 
+USTRUCT()
+struct FGoKartMove
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	float DeltaTime;
+
+	UPROPERTY()
+	float Throttle;
+
+	UPROPERTY()
+	float SteeringThrow;
+	
+};
+
+USTRUCT()
+struct FGoKartState
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	FTransform Transform;
+	
+	UPROPERTY()
+	FVector Velocity;
+
+	UPROPERTY()
+	FGoKartMove LastMove;
+};
+
 UCLASS()
 class KRAZYKARTS_API AGoKart : public APawn
 {
@@ -31,11 +62,19 @@ private:
 	FVector GetAirResistance();
 	FVector GetRollingResistance();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveForward(float Value);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_MoveRight(float Value);
+
 	void MoveForward(float Value);
 	void MoveRight(float Value);
+	
 	void ApplyRotation(float DeltaTime);
 	void UpdateLocationFromVelocity(float DeltaTime);
 
+    UPROPERTY(Replicated)
 	FVector Velocity;
 
 	// The Mass of the Car (kg)
@@ -46,9 +85,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	float MaxDrivingForce = 10000;
 
-	// The number of degrees rotated per second at full control throw (degrees/s)
+	// Minimum radius of the car turning circle at full lock (m)
 	UPROPERTY(EditAnywhere)
-	float MaxDegreesPerSecond = 90;
+	float MinimumTurningRadius = 10;
 
 	// Higher means more Drag (kg/per meter)
 	UPROPERTY(EditAnywhere)
@@ -57,8 +96,18 @@ private:
 	// Higher means more rolling resistance
 	UPROPERTY(EditAnywhere)
 	float RollingResistanceCoefficient = 0.015f;
-	
+
+	UPROPERTY(ReplicatedUsing=OnRep_ReplicatedTransform)
+	FTransform ReplicationTransform;
+
+	UFUNCTION()
+	void OnRep_ReplicatedTransform();
+
+	UPROPERTY(Replicated)
 	float Throttle;
+
+	UPROPERTY(Replicated)
 	float SteeringThrow;
+	
 	float Speed;
 };

@@ -2,27 +2,47 @@
 
 
 #include "GoKart.h"
+#include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AGoKart::AGoKart()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
 void AGoKart::BeginPlay()
 {
 	Super::BeginPlay();
+
+	ReplicationTransform = GetActorTransform();
+
+	if(HasAuthority())
+	{
+		NetUpdateFrequency = 1;
+	}
+}
+
+void AGoKart::GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME( AGoKart, ReplicationTransform );
+	DOREPLIFETIME( AGoKart, Velocity );
+	DOREPLIFETIME( AGoKart, Throttle );
+	DOREPLIFETIME( AGoKart, SteeringThrow );
 	
 }
 
 void AGoKart::ApplyRotation(float DeltaTime)
 {
-	float RotationAngle = MaxDegreesPerSecond * DeltaTime * SteeringThrow;
+	float DeltaLocation = FVector::DotProduct(GetActorForwardVector(), Velocity) * DeltaTime;
+	float RotationAngle = DeltaLocation / MinimumTurningRadius * SteeringThrow;
 	FQuat RotationDelta(GetActorUpVector(),
-	                    FMath::DegreesToRadians(RotationAngle));
+	                    RotationAngle);
 
 	Velocity = RotationDelta.RotateVector(Velocity);
 	AddActorWorldRotation(RotationDelta, true);
@@ -39,15 +59,22 @@ void AGoKart::Tick(float DeltaTime)
 	
 	FVector Acceleration = Force / Mass;
 
-
-
 	Velocity = Velocity + Acceleration * DeltaTime;
 
 	// Length of the vector, which indicates the speed;
 
 	ApplyRotation(DeltaTime);
 	UpdateLocationFromVelocity(DeltaTime);
-	
+
+	if(HasAuthority())
+	{
+		ReplicationTransform = GetActorTransform();
+	}
+}
+
+void AGoKart::OnRep_ReplicatedTransform()
+{
+	SetActorTransform(ReplicationTransform);
 }
 
 // Called to bind functionality to input
@@ -76,11 +103,39 @@ FVector AGoKart::GetRollingResistance()
 void AGoKart::MoveForward(float Value)
 {
 	Throttle = Value;
+	Server_MoveForward(Value);
 }
 
 void AGoKart::MoveRight(float Value)
 {
-	SteeringThrow = Value;
+	if(Velocity.Z != 0 || Velocity.X != 0)
+	{
+		SteeringThrow = Value;
+		Server_MoveRight(Value);
+	}
+}
+
+void AGoKart::Server_MoveForward_Implementation(float Value)
+{
+	Throttle = Value;
+}
+
+bool AGoKart::Server_MoveForward_Validate(float Value)
+{
+	return FMath::Abs(Value) <= 1;
+}
+
+void AGoKart::Server_MoveRight_Implementation(float Value)
+{
+	if(Velocity.Z != 0 || Velocity.X != 0)
+	{
+		SteeringThrow = Value;
+	}
+}
+
+bool AGoKart::Server_MoveRight_Validate(float Value)
+{
+	return FMath::Abs(Value) <= 1;
 }
 
 void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
@@ -95,4 +150,6 @@ void AGoKart::UpdateLocationFromVelocity(float DeltaTime)
 		Velocity = FVector::ZeroVector;
 	}
 }
+
+
 
