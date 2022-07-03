@@ -10,7 +10,6 @@ UGoKartMovementComponent::UGoKartMovementComponent()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
 	// ...
 }
 
@@ -19,9 +18,6 @@ UGoKartMovementComponent::UGoKartMovementComponent()
 void UGoKartMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-
-	
 }
 
 
@@ -29,8 +25,13 @@ void UGoKartMovementComponent::BeginPlay()
 void UGoKartMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 	// ...
+
+	if(GetOwnerRole() == ROLE_AutonomousProxy || GetOwner()->GetRemoteRole() == ROLE_SimulatedProxy)
+	{
+		LastMove = CreateMove(DeltaTime);
+		SimulateMove(LastMove);		
+	}
 }
 
 

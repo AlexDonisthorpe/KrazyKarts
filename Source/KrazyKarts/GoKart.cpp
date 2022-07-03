@@ -22,6 +22,8 @@ void AGoKart::BeginPlay()
 	{
 		NetUpdateFrequency = 1;
 	}
+
+	SetReplicateMovement(false);
 }
 
 // Called every frame
